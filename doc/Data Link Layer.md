@@ -60,3 +60,5 @@ In practice you use multiple layers of errors detecting:
 - IP uses checksums
 - TCP uses checksums
 - Applications can have their own error detection
+
+This minimizes the chance of errors by a whole bunch, making error detection worth it.
