@@ -64,15 +64,16 @@ This minimizes the chance of errors by a whole bunch, making error detection wor
 
 ### Parity Check
 The parity check can be used to detect and correct 1-bit errors (when using parity blocks). It is a very simple example
-of a 1-bit CDC, using the generator polynomial `x + 1` (`n = 1`). The parity check can be done in two ways; the even
+of a 1-bit CDC, using the generator polynomial `x + 1` (`n = 1`). The parity check can be done in two ways; even
 parity checking or odd parity checking.
 
-When applying even parity checking, the 1-bit CDC will be used to ensure that there are an even amount of 1's in the
-whole packet. This means that `1001` would have the parity bit `0`, and that `1101` would have the parity bit `1`.
+When applying even parity checking, the 1-bit CDC (the parity bit) will be used to ensure that there are an even amount
+of 1's in the packet. This means that `1001` would have the parity bit `0`, and that `1101` would have the parity bit `1`.
 
 Odd parity checking works in the exact same fashion, but this time ensures that there is an odd amount of 1's in the packet.
 
-When two (or any even amount) bits flip, the parity check won't work anymore. So it can only be used to detect 1-bit errors.
+When two bits flip (or any even amount of bits), the parity check won't work anymore.
+So it can only be used to detect 1-bit errors.
 
 #### Parity Blocks
 Parity blocks (2-dimensional parity checks) are used to detect where a 1-bit error occurred within a packet. Instead of
@@ -91,3 +92,7 @@ This could look like this:
 
 The last packet that was sent will now contain additional parity bits for each previous packet. This makes it possible
 to see exactly where the error occurred (if an error occurred).
+
+In a case where 3 bits flip in a single packet, it would still be possible to detect their positions when using parity blocks.
+However, when multiple packets in the block have flipped bits, this is no longer possible. This once again means that
+it is only possible to detect and correct 1-bit errors.
