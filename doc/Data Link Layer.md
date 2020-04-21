@@ -25,11 +25,10 @@ It is always able to detect an odd number of errors, or 2 errors.
 There is a 2<sup>-c</sup> chance one packet's CRC matches another.
 Link layers typically use CRC's, which is why TCP & IP can get away with checksums. USB and Bluetooth use 16-bit CRC's.
 
-CRC's use polynomial long division. Each bit of a packet define a coefficient of a polynomial (0 = 0, 1 = 1).
-The polynomial used is called the *generator polynomial* `G`. It should have degree `c`. The strength of a CRC algorithm
-depends on `G`.
+CRC's use polynomial long division. The polynomial used is called the *generator polynomial* `G`. It should have degree `c`.
+`G` is always left-padded with a 1. The strength of a CRC algorithm depends on `G`.
 
-To generate a CRC, you take the message `M`, pad it with `c` 0-bits, and divide it by `G`. The remainder is the CRC.
+To generate a CRC, you take the message `M`, right-pad it with `c` 0-bits, and divide it by `G`. The remainder is the CRC.
 To check a CRC, you take divide `M + CRC` by `G`. If the remainder is 0, then the CRC passes.
 
 ### Message authentication code
@@ -62,3 +61,33 @@ In practice you use multiple layers of errors detecting:
 - Applications can have their own error detection
 
 This minimizes the chance of errors by a whole bunch, making error detection worth it.
+
+### Parity Check
+The parity check can be used to detect and correct 1-bit errors (when using parity blocks). It is a very simple example
+of a 1-bit CDC, using the generator polynomial `x + 1` (`n = 2`). The parity check can be done in two ways; the even
+parity checking or odd parity checking.
+
+When applying even parity checking, the 1-bit CDC will be used to ensure that there are an even amount of 1's in the
+whole packet. This means that `1001` would have the parity bit `0`, and that `1101` would have the parity bit `1`.
+
+Odd parity checking works in the exact same fashion, but this time ensures that there is an odd amount of 1's in the packet.
+
+When two (or any even amount) bits flip, the parity check won't work anymore. So it can only be used to detect 1-bit errors.
+
+#### Parity Blocks
+Parity blocks (2-dimensional parity checks) are used to detect where a 1-bit error occurred within a packet. Instead of
+sending just one parity bit per packet, an additional one is sent for each bit sent per packet. These are sent as a last
+packet.
+
+This could look like this:
+
+|Data|Parity Bit|
+|:---:|:---:|
+|11001010|0|
+|10010110|0|
+|10011011|1|
+|||
+|11000111|1|
+
+The last packet that was sent will now contain additional parity bits for each previous packet. This makes it possible
+to see exactly where the error occurred (if an error occurred).
