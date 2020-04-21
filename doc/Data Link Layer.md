@@ -64,7 +64,7 @@ This minimizes the chance of errors by a whole bunch, making error detection wor
 
 ### Parity Check
 The parity check can be used to detect and correct 1-bit errors (when using parity blocks). It is a very simple example
-of a 1-bit CDC, using the generator polynomial `x + 1` (`n = 2`). The parity check can be done in two ways; the even
+of a 1-bit CDC, using the generator polynomial `x + 1` (`n = 1`). The parity check can be done in two ways; the even
 parity checking or odd parity checking.
 
 When applying even parity checking, the 1-bit CDC will be used to ensure that there are an even amount of 1's in the
