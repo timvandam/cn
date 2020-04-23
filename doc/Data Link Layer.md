@@ -7,7 +7,9 @@ The data link layer is responsible for detecting or correcting errors during tra
 ## Error Detection
 The physical layer is not perfect. Many things can go wrong; bits can be flipped, omitted, etc.
 Networks today usually use three different error detection algorithms: **checksums**, **cyclic redundancy checks** (CRC)
-and **message authentication code** (MAC)
+and **message authentication code** (MAC). Error detection algorithms can either only detect errors, or also locate them.
+Being able to locate them is very useful for error-prone mediums like WiFi, as a complete retransmission could very likely
+also contain errors.
 
 ### Checksum
 A checksum is simply a sum of all the values of length `n`  in the packet. Checksums are very cheap to compute, however they are not
@@ -96,3 +98,24 @@ to see exactly where the error occurred (if an error occurred).
 In a case where 3 bits flip in a single packet, it would still be possible to detect their positions when using parity blocks.
 However, when multiple packets in the block have flipped bits, this is no longer possible. This once again means that
 it is only possible to detect and correct 1-bit errors.
+
+### Hamming code
+Hamming codes can be used to correct single-bit errors. They work by using multiple parity bits, each at the 2<sup>n</sup>-th
+position of a packet. These parity bits account for every alternating block of n bits after the parity bit (including the parity bit itself)
+(first n bits count, next n don't, next n do, etc.). When receiving a packet using a hamming code, the sum of the positions
+of incorrect parity bits will be the position of the incorrect bit. This looks like this:
+
+|p1|p2|m3|p4|m5|m6|m7|p8|m9|m10|m11|
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|0|0|1|1|0|1|1|0|0|0|0|
+|&check;|&cross;| |&cross;| |&cross;| |&check;||||
+||||||||||||
+|1|1|1|1|1|1|1|1|1|1|1|
+|&check;|&check;| |&check;| | | |&check;||||
+
+#### Burst errors
+Hamming codes can also be used to detect bursts of errors. This is done just like parity blocks. You send packets per column
+of bits instead of per row. After having received the whole matrix of packets it is then reconstructed and the parity bits
+are checked. This works because columns are sent instead of rows. When a burst error occurs in this column there will be
+just one mistake per row, meaning that rows can be fixed again. If there are burst errors in multiple columns, however,
+this won't work.
