@@ -7,6 +7,7 @@ network layer.
 - [Error Detection](#error-detection)
 - [Services](#services)
 - [Framing Methods](#framing-methods)
+- [Acknowledgements and Repeats](#acknowledgements-and-repeats)
 
 ## Error Detection
 The physical layer is not perfect. Many things can go wrong; bits can be flipped, omitted, etc.
@@ -191,3 +192,18 @@ sequence of indeterminate length, and instead of an escape byte you use an escap
 is that it can be implemented at the hardware level. To escape a flag you simply insert a 0-bit into the sequence. This
 new sequence - that starts the same way the flag sequence does but contains an extra 0 at some position - can be
 recognized by the receiver, who will remove the redundant bit.
+
+## Acknowledgements and Repeats
+If your aim is to have reliable communication, acknowledgements and repeats are an important concept. If your device is
+constantly listening for messages, it is important to let the sending know when you've received the message to ensure no
+messages are lost. This is done by sending an acknowledgement (ACK). If the sender doesn't receive an ACK, then it will
+simply resend the lost message. This is called *Automatic Repeat ReQuest (ARQ)*. To ensure that it is known which
+messages were acknowledges and which weren't, messages are numbered using *sequence numbers*. This also allows all
+message to be processed in the order they were sent. When applying *stop and wait* only one outgoing message can be
+active at a time. In this case you need just 1 bit to track a message - one for a new message, and one for a
+retransmission.
+
+Instead of sending an acknowledgement for every received message, you can also combine an acknowledgement with an
+outgoing message to improve performance. This is called *piggybacking*. You should not wait too long before sending the
+acknowledgement on its own, though, because then the sender would retransmit the received message as it didn't receive
+an ACK.
