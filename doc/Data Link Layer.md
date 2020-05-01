@@ -6,6 +6,7 @@ network layer.
 ## Index
 - [Error Detection](#error-detection)
 - [Services](#services)
+- [Framing Methods](#framing-methods)
 
 ## Error Detection
 The physical layer is not perfect. Many things can go wrong; bits can be flipped, omitted, etc.
@@ -160,3 +161,33 @@ possible. In that case the overhead connection-oriented services have should be 
 communication. A little bit of jittering is a valid tradeoff of connectionless services in that case (instead of
 buffering). The same goes for transmitting live video.
 
+## Framing Methods
+The datalink layer takes data from the network layer and divides it into frames. To indicate the start and end of a
+frame, the sender has to send some additional information. An algorithm that does this is called a *framing method*.
+
+### Prepending Length
+It might seem easy to indicate the start and end of a frame; simply prepend the length of the frame (+ the length
+value's length). However, this is not effective as you might think, since one lost bit, or flipped bit in the frame length
+will cause everything sent after to be misinterpreted. 
+
+### Byte stuffing
+Another framing method is indicating the start and/or end of a frame using a byte-size flag, which is simply a specific
+sequence of bits. Like the 'byte count' method just discussed, this problem also suffers from bit flips and missing bits.
+However, unlike the byte count method this method won't misinterpret every message sent after an invalid one; instead it
+will read too much until it encounters another start/stop sequence. This makes it a bit better than simply prepending the
+amount of bytes, but is still not an ideal solution. Another disadvantage is that the start/stop sequence will no longer
+be usable in the actual message.
+
+This can kind of be fixed by prepending an escape sequence before the data sequence that is also the start/stop sequence.
+This escape sequence, however, can also suffer from bit flips. Additionally, what happens if your frame contains the
+escape sequence? Then you would have to escape the escape. If your frame contains the escape + start/stop, then you
+would have to escape twice. Simply put, it all becomes a mess of escapes! You're effectively trading frame length for
+reliable reading.
+
+### Bit stuffing
+Byte stuffing can be very space inefficient, as any reserved sequence in your message will take up twice as much space
+as you have to escape those. With bit stuffing this is not the case. Instead of a flag byte, there will be a flag
+sequence of indeterminate length, and instead of an escape byte you use an escape bit. A great advantage of bit stuffing
+is that it can be implemented at the hardware level. To escape a flag you simply insert a 0-bit into the sequence. This
+new sequence - that starts the same way the flag sequence does but contains an extra 0 at some position - can be
+recognized by the receiver, who will remove the redundant bit.
