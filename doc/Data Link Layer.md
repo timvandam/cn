@@ -1,8 +1,11 @@
 # Data Link Layer
-The data link layer is responsible for detecting or correcting errors during transmission (the physical layer)
+The data link layer is responsible for regulating data flow, detecting or correcting errors during transmission
+(via the physical layer). It groups bits into so-called **frames**, and provides services to the layer above, the
+network layer.
 
 ## Index
 - [Error Detection](#error-detection)
+- [Services](#services)
 
 ## Error Detection
 The physical layer is not perfect. Many things can go wrong; bits can be flipped, omitted, etc.
@@ -119,3 +122,41 @@ of bits instead of per row. After having received the whole matrix of packets it
 are checked. This works because columns are sent instead of rows. When a burst error occurs in this column there will be
 just one mistake per row, meaning that rows can be fixed again. If there are burst errors in multiple columns, however,
 this won't work.
+
+## Services
+Layers can offer two types of services to layers above them; connectionless services and connection-oriented services. 
+
+### Connectionless Services
+Connectionless services are services that perform tasks without need for communication. An example is a postal service.
+You mail something to somebody, and it will eventually arrive. Other messages to that person might arrive sooner, later,
+you don't know. Every frame is independent of all others, so it is possible to send two frames where the second to be
+sent can arrive first. Since there is no negotiation connectionless services are more prone to data loss, however this
+also increases speed. An example could be UDP. Connectionless services are generally called **datagram services**.
+
+### Connection-oriented Services
+Connection-oriented services function sort of like a phone; to talk to somebody you pick up the phone, dial their number,
+talk, and then hang up. Similarly, connection-oriented network services first establish a connection, then negotiate
+parameters (such as the maximum frame size), then communicate and eventually hang up. Negotiations make it possible to
+ensure that all frames arrive in order, and that they all arrive at all. This makes a connection-oriented service
+important when downloading files, for instance, as you can't do anything with a half-downloaded game, zip, etc. This
+overhead makes connection-oriented services less speedy. An example could be TCP. Connection-oriented services are
+generally called **telegram services**.
+
+Reliable connection-oriented services has two minor variations: message sequences and byte streams.
+
+### Message Sequences
+When using message sequences the length of each message is preserved. They will never be combined to create one big
+message consisting of both messages. E.g. when sending two 1024-byte messages they will also arrive as two 1024-byte
+messages, not as one 2048-byte message.
+
+### Byte streams
+Byte streams are exactly what their name implies. Data doesn't have clear boundaries, you don't know when a message
+starts and when a message ends. The two messages would then arrive as one 2048-byte message, and you won't know how
+exactly those bytes were sent: as two 1024-byte messages, one 2048-byte message, or even 2048 1-byte messages.
+
+Both byte streams and message sequences have their advantages and disadvantages, so which is better depends on the
+context they're used in. When using VoIP, for instance, you want to hear what the other party has to say as soon as
+possible. In that case the overhead connection-oriented services have should be prevented as it slows down the
+communication. A little bit of jittering is a valid tradeoff of connectionless services in that case (instead of
+buffering). The same goes for transmitting live video.
+
