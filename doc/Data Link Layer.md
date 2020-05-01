@@ -173,7 +173,7 @@ will cause everything sent after to be misinterpreted.
 
 ### Byte stuffing
 Another framing method is indicating the start and/or end of a frame using a byte-size flag, which is simply a specific
-sequence of bits. Like the 'byte count' method just discussed, this problem also suffers from bit flips and missing bits.
+sequence of bits. Like the *byte count* method just discussed, this problem also suffers from bit flips and missing bits.
 However, unlike the byte count method this method won't misinterpret every message sent after an invalid one; instead it
 will read too much until it encounters another start/stop sequence. This makes it a bit better than simply prepending the
 amount of bytes, but is still not an ideal solution. Another disadvantage is that the start/stop sequence will no longer
@@ -197,13 +197,13 @@ recognized by the receiver, who will remove the redundant bit.
 If your aim is to have reliable communication, acknowledgements and repeats are an important concept. If your device is
 constantly listening for messages, it is important to let the sending know when you've received the message to ensure no
 messages are lost. This is done by sending an acknowledgement (ACK). If the sender doesn't receive an ACK, then it will
-simply resend the lost message. This is called *Automatic Repeat ReQuest (ARQ)*. To ensure that it is known which
+simply resend the lost message. This is called **Automatic Repeat ReQuest (ARQ)**. To ensure that it is known which
 messages were acknowledges and which weren't, messages are numbered using *sequence numbers*. This also allows all
-message to be processed in the order they were sent. When applying *stop and wait* only one outgoing message can be
+message to be processed in the order they were sent. When applying **stop and wait** only one outgoing message can be
 active at a time. In this case you need just 1 bit to track a message - one for a new message, and one for a
 retransmission.
 
 Instead of sending an acknowledgement for every received message, you can also combine an acknowledgement with an
-outgoing message to improve performance. This is called *piggybacking*. You should not wait too long before sending the
+outgoing message to improve performance. This is called **piggybacking**. You should not wait too long before sending the
 acknowledgement on its own, though, because then the sender would retransmit the received message as it didn't receive
 an ACK.
