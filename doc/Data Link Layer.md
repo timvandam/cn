@@ -207,3 +207,43 @@ Instead of sending an acknowledgement for every received message, you can also c
 outgoing message to improve performance. This is called **piggybacking**. You should not wait too long before sending the
 acknowledgement on its own, though, because then the sender would retransmit the received message as it didn't receive
 an ACK.
+
+### Sliding Window Protocols
+Sliding window protocols limit the number of unacknowledged frames and introduce the use of buffers at the sender side.
+An important aspect of sliding window protocols is their use of sequence numbers as discussed in the previous paragraph.
+Sliding window protocols keep track of the status of frames in a buffer, having at most `k` transmitted but
+unacknowledged frames at a time. The buffer starts with transmitted, acknowledges frames, then come transmitted
+unacknowledged frames, and then come not yet transmitted frames.
+
+The section of the buffer that contains unacknowledges but transmitted frames is called the *sliding window*. Whenever
+the top frame is acknowledges, the window will slide down one, transmitting the first frame in the section of not yet
+transmitted frames.
+
+#### Choosing `k`
+The choice of the value of `k` is important; it determines how many unacknowledged, transmitted frames your buffer will
+contain. This means that `k` must not exceed the size of the buffer. However, how large `k` is can also have an effect
+on the speed of applications. When there is a lot of latency, you will have to wait for acknowledgements. If the section
+of the buffer containing unacknowledges, transmitted frames is full during that time your application will idle for a
+bit. This is bad as it means your data transfer rate will be slower. So `k` should be set so that there are no periods
+at which no bandwidth is used.
+
+#### How about errors?
+Until now any errors would break the sliding window, as frames that never get acknowledges would cause the sliding
+window to be stuck. One solution to this is **Go-Back-N**.
+
+Go-Back-N starts a timer the moment a frame is transmitted. Once the timer goes off and the frame has not received an
+ACK, it will simply retransmit the unacknowledged frame and all frames sent after. This effectively means that the
+sliding window is moved back up until the unacknowledges frame is at the top, and that all frames in the window are then
+transmitted again.
+
+An alternative strategy is **Selective Repeat**, where not all frames after the unacknowledged frame are sent, but only
+the unacknowledged one is.  
+
+Selective repeat introduces *Negative Acknowledgements*. Whenever the sender receives such a message it will resent 
+frame it received such an NACK for. If a frame doesn't arrive, the receiver won't be able to send a NACK, though. In
+those cases the receiver will detect a missing frame when receiving the next one. For example, when frame 3 goes missing,
+and the receiver just received frame 4, it will send a NACK 3 to the sender. The receiver *will* buffer frame 4 though,
+so contrary to Go-Back-N now just the lost frames will have to be resent.
+
+Selective repeat can also use timers, just like Go-Back-N, but instead for individual frames. A combinating of NACK's and
+timers is also possible.
