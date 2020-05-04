@@ -191,7 +191,8 @@ as you have to escape those. With bit stuffing this is not the case. Instead of 
 sequence of indeterminate length, and instead of an escape byte you use an escape bit. A great advantage of bit stuffing
 is that it can be implemented at the hardware level. To escape a flag you simply insert a 0-bit into the sequence. This
 new sequence - that starts the same way the flag sequence does but contains an extra 0 at some position - can be
-recognized by the receiver, who will remove the redundant bit.
+recognized by the receiver, who will remove the redundant bit. Not only the sequence gets an additional 0-bit, but every
+sequence starting with a certain combination of bits.
 
 ## Acknowledgements and Repeats
 If your aim is to have reliable communication, acknowledgements and repeats are an important concept. If your device is
