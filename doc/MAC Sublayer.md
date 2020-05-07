@@ -5,6 +5,7 @@ at the very bottom of the Data Link Layer.
 ## Index
 - [The Channel Allocation Problem](#the-channel-allocation-problem)
 - [CSMA/CD](#csmacd)
+- [Protocols in Wireless Channels](#protocols-in-wireless-channels)
 
 ## The Channel Allocation Problem
 Every cable is only capable of sending so much data per time unit; its bandwidth is limited. This limitation requires us
@@ -104,4 +105,27 @@ some priority for every 1-bit in their number. The higher their number, the more
 will send one bit of their station number, so whenever a 1-bit is present, all 0-bit stations will have lost and stop
 trying to gain access to the channel. Once there is just one station left, that station will be allowed to transmit.
 This is much more scalable than basic bitmaps as not all users will have their own bit. Instead, they just transmit to
-enter the race for channel access only whenever they want to send data.
+enter the race for channel access only whenever they want to send data. The overhead is now `log(n)` instead of `n` for
+basic bit-maps.
+
+## Protocols in Wireless Channels
+Wireless channels are very convenient, but make it harder to detect collisions.
+
+### Hidden & Exposed Terminals
+Picture the following scenario: three phones want to communicate with each other. Phones A & B, and B & C are within
+range of each other, but A & C are not. In this case A and C cannot communicate directly and will not know whether they
+are transmitting or not. This means that if both A and C want to send a message to B, they won't know if B is already
+receiving data; carrier sense fails, and collisions are bound to happen. When collisions *do* happen, A and C will also
+be unable to detect them. A and C are each other's hidden terminals, while B is an exposed terminal for both A and C.
+
+When B wants to send data to A, C will sense that B is busy, thus C will not transmit data. However, even if C did
+transmit data no collisions would be caused. So exposed in this situation exposed terminals will cause unnecessary
+delays.
+
+#### MACA 
+The solution to the previously described problems is *MACA* (Multi Access with Collision Avoidance). With MACA, whenever
+a node wants to send data to another, it will first send a **Request To Send**. All exposed nodes will receive this,
+and the receiver node will respond with a **Clearance To Send**, while other exposed nodes will wait. The exposed nodes
+that don't receive a CTS are outside of the range of the receiver node, so it will be safe for them to transmit data to
+other available nodes (which will be hidden nodes to the original receiver node). MACA is a very simple but effective
+solution to the described problem.
