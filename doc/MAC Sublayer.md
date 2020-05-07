@@ -4,6 +4,7 @@ at the very bottom of the Data Link Layer.
 
 ## Index
 - [The Channel Allocation Problem](#the-channel-allocation-problem)
+- [CSMA/CD](#csmacd)
 
 ## The Channel Allocation Problem
 Every cable is only capable of sending so much data per time unit; its bandwidth is limited. This limitation requires us
@@ -36,7 +37,9 @@ in use or not. This creates a difference between allocation *with* carrier sense
 The oldest protocol without carrier sense is *ALOHA*; users transmit frames whenever they want. If a collision were to
 happen you would simply retry transmission after a random delay. You could use a protocol like ALOHA when your medium
 doesn't have many concurrent users as it does not scale very well; every packet that overlaps with another packet will
-cause both packets to fail, which is absolutely horrific for performance.
+cause both packets to fail, which is absolutely horrific for performance. 
+
+Protocols to which you can send data at any time are a form of *Utopian Simplex*.
 
 To improve performance without carrier sense it is possible to allocate time slots to users. This makes the system much
 more complex as problems such as time synchronization have to be solved. This boosts performance by a factor of 2. The
@@ -70,3 +73,35 @@ enough.
 sending data whenever a user's time slot opens, it will only does this with a certain probability `p`. `p` determines
 how aggressive the protocol is; the lower `p` is, the lower the amount of collisions, the higher `p` is, the higher the
 amount of collisions. In case of a collision a random backup will occur.
+
+## CSMA/CD
+*CSMA/CD* is an improvement on *CSMA*. The 'CD' stands for *Collision Detection*, but this is not like normal collision
+detection; instead it can detect collisions before they happen at all. This allows a user to stop sending their message
+in case of potential collisions, preventing them altogether. This not only saves time but also bandwidth. Users will
+transmit a single bit during the **contention period**, whoever's bit arrives first (without collisions) will be the
+winner and will be able to transmit their data, which starts the **transmission period**. Note that collisions still
+happen, but they will only happen during the contention period, in which only singular bits are sent, making this a
+cheap process.
+
+Here are a few protocols that implement CSMA/CD:
+
+### Basic Bit-Map
+With basic bit-maps, every user will have their own contention slot. Users of the medium can then transmit a 1-bit at
+the exact time of their contention slot. Since all users are on the same BUS, all users will know of this. This allows
+them to coordinate the order in which they will send their frames. A disadvantage of this system is that it does not
+scale particularly well; when there are many users the contention period will only get longer; 1000 devices create 1000
+contention slots, etc.
+
+### Token Ring
+Token Rings are quite simple; all users send their messages in a predefined order. Whenever a user has the *token*, they
+can transmit their data. Once they're done transmitting their data (or don't have data to transmit) the token will be
+passed on to the next user. The order of users is pre-defined based on e.g. their WiFi number. An obvious downside of
+this is that whenever users join and leave the ring needs to be reconstructed, so proper management is a must. 
+
+### Binary Countdown
+Binary Countdown is an improvement on the Basic Bit-Map. Each user will have their own station number, which will gain
+some priority for every 1-bit in their number. The higher their number, the more priority they have. Each bit-time they
+will send one bit of their station number, so whenever a 1-bit is present, all 0-bit stations will have lost and stop
+trying to gain access to the channel. Once there is just one station left, that station will be allowed to transmit.
+This is much more scalable than basic bitmaps as not all users will have their own bit. Instead, they just transmit to
+enter the race for channel access only whenever they want to send data.
