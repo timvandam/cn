@@ -161,3 +161,11 @@ Some core elements of CSMA/CA are:
 2. Virtual Channel Sending
     - Frames carry a **Network Allocation Field** (NAV) that indicates the transmission's length. This allows stations to
     wait for the end of a transmission.
+
+CSMA/CA inserts backoff slots to avoid collisions, MAC uses ACKs/retransmissions for wireless errors.
+
+#### Infrastructure Modes
+There are infrastructure two modes in 802.11:
+1. 
+2. 
+TODO: Watch the end of the 802.11 lecture (33:00)
