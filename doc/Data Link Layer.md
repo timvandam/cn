@@ -196,7 +196,7 @@ sequence starting with a certain combination of bits.
 
 ## Acknowledgements and Repeats
 If your aim is to have reliable communication, acknowledgements and repeats are an important concept. If your device is
-constantly listening for messages, it is important to let the sending know when you've received the message to ensure no
+constantly listening for messages, it is important to let the sender know when you've received the message to ensure no
 messages are lost. This is done by sending an acknowledgement (ACK). If the sender doesn't receive an ACK, then it will
 simply resend the lost message. This is called **Automatic Repeat ReQuest (ARQ)**. To ensure that it is known which
 messages were acknowledges and which weren't, messages are numbered using *sequence numbers*. This also allows all

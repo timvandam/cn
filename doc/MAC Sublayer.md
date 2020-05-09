@@ -6,6 +6,7 @@ at the very bottom of the Data Link Layer.
 - [The Channel Allocation Problem](#the-channel-allocation-problem)
 - [CSMA/CD](#csmacd)
 - [Protocols in Wireless Channels](#protocols-in-wireless-channels)
+- [MAC in Classical Real-World Protocols](#mac-in-classical-real-world-protocols)
 
 ## The Channel Allocation Problem
 Every cable is only capable of sending so much data per time unit; its bandwidth is limited. This limitation requires us
@@ -82,7 +83,7 @@ in case of potential collisions, preventing them altogether. This not only saves
 transmit a single bit during the **contention period**, whoever's bit arrives first (without collisions) will be the
 winner and will be able to transmit their data, which starts the **transmission period**. Note that collisions still
 happen, but they will only happen during the contention period, in which only singular bits are sent, making this a
-cheap process.
+cheap process. It can take as long as twice the time to propagate the Ethernet to detect collisions.
 
 Here are a few protocols that implement CSMA/CD:
 
@@ -129,3 +130,34 @@ and the receiver node will respond with a **Clearance To Send**, while other exp
 that don't receive a CTS are outside of the range of the receiver node, so it will be safe for them to transmit data to
 other available nodes (which will be hidden nodes to the original receiver node). MACA is a very simple but effective
 solution to the described problem.
+
+## MAC in Classical Real-World Protocols
+Machines used to share a single Ethernet connection, which meant that CSMA/CD was needed to transmit data succesfully.
+In classes Ethernet 1-persistent CSMA/CD was used, where **BEB** (Binary Exponential Backoff) was used to compute the
+random backoff time. With BEB, the number of slots to wait depends on the amount of failed attempts, using the formula
+2<sup>i</sup> - 1. This technique would be efficient for large frames, but not for smaller frames. This is because
+bigger frames mean less contention period in the same time frame. This shows that the contention period can be quite a
+bottleneck for small messages.
+
+### Classic Ethernet Frames
+|Ethernet (DIX)|Preamble|Destination Address|Source Address|Type|Data|Pad|Chunksum|
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|Bytes|8|6|6|2|0-1500|0-46|4|
+
+|IEEE 802.3|Preamble + S o F|Destination Address|Source Address|Length|Data|Pad|Chunksum|
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|Bytes|8|6|6|2|0-1500|0-46|4|
+
+### MAC in 802.11 (WiFi)
+Wireless stations can not detect collisions. Hence, they rely on ACKs to determine whether collisions occurred. If an ACK
+is lost the sending will simply assume that a frame was lost, resending it. These stations *can* use MACA, but usually
+don't. Instead of detecting collisions, they are avoided: **CSMA/CA**.
+
+#### CSMA/CA
+Some core elements of CSMA/CA are:
+1. Physical Channel Sensing
+    - Sensing whether the physical channel is in use.
+    - If it is, wait for the channel to be idle.
+2. Virtual Channel Sending
+    - Frames carry a **Network Allocation Field** (NAV) that indicates the transmission's length. This allows stations to
+    wait for the end of a transmission.
