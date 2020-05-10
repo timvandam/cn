@@ -7,6 +7,7 @@ at the very bottom of the Data Link Layer.
 - [CSMA/CD](#csmacd)
 - [Protocols in Wireless Channels](#protocols-in-wireless-channels)
 - [MAC in Classical Real-World Protocols](#mac-in-classical-real-world-protocols)
+- [Data Link Layer Switching](#data-link-layer-switching)
 
 ## The Channel Allocation Problem
 Every cable is only capable of sending so much data per time unit; its bandwidth is limited. This limitation requires us
@@ -164,8 +165,79 @@ Some core elements of CSMA/CA are:
 
 CSMA/CA inserts backoff slots to avoid collisions, MAC uses ACKs/retransmissions for wireless errors.
 
-#### Infrastructure Modes
-There are infrastructure two modes in 802.11:
-1. 
-2. 
-TODO: Watch the end of the 802.11 lecture (33:00)
+#### 802.11 modes
+There are two modes in 802.11:
+1. Infrastructure Mode
+    - There is one base station that decides who controls the entire thing - it controls who can talk, etc. This is what
+    most networks use (and what pertty much all users can use)
+2. Ad-hoc Mode
+    - There is no centralized station - you can talk to anyone within your range. Every user is always listening making
+    this mode expensive battery wise (hence phones pretty much never do this). This mode is much harder to take down as
+    every part of such a network has control.
+
+#### 802.11 Frames
+|Frame|Frame Control|Duration|Address 1 (recipient)|Address 2 (transmitter)|Address 3|Sequence|Data|Check Sequence|
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|Bytes|2|2|6|6|6|2|0-2312|4|
+
+Address 3 is for nodes that forward/relay messages (e.g. the base station, an ad-hoc node, etc.).
+
+The frame control looks like this:
+
+|Frame Control|Version = 00|Type = 10|Subtype = 0000|To DS|From DS|More Frag.|Retry|Pwr. Mgt.|Mode Data|Protected|Order|
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|Bits|2|2|4|1|1|1|1|1|1|1|1|
+
+## Data Link Layer Switching
+If you have many local networks within say an organisation, it is often very handle to join these to makeone big LAN.
+This can be done with **bridges**. The opposite is also possible; you can split one LAN into seperate LANs using
+**VLANs** (virtual LANs).
+
+### Use of Bridges
+There are a few reasons for using bridges:
+1. The need to connect computers in separate LANs.
+2. One big LAN over a big area is not feasible.
+    - Ethernet cables can only get that long.
+3. One big LAN might have to be split up into smaller LANs to accommodate for big loads.
+    - Each LAN can only have a limited amount of bandwidth.
+
+Bridges should be transparent, meaning they are not visible to users. They should function like plug-and-play devices;
+you insert them into your network, and everything still functions the way they functioned before. Transparent bridges
+can be created using two algorithms:
+1. Backwards Learning.
+    - Stop traffic from being sent where they are not needed.
+2. A Spanning Tree Algorithm.
+    - Break loops that may be formed when switched are cabled together randomly. 
+
+#### Backwards Learning
+Backwards learning ensures that data is only sent to where it's needed. When one of the devices connected to a switch
+sends some data, it will be broadcast to all other connected devices. At this point to switch will only know who the
+sender was. Now when another device wants to send some data to the device that just sent something, the switch will
+already know where that device is. The switch pretty much remembers which device is where after these devices send a
+message. This makes it so that whenever a device is the recipient of a message, it can be sent just to them, instead of
+being broadcast on the network.
+
+The disadvantage of this configuration is that you cannot change ports - the switch will remember that port A belongs
+to device X, so connecting device X to port B would mean it would no longer receive any of the messages it is addressed
+to as they will still be sent to only port A.
+
+Another issue is that loops in the network would cause an infinite loop of broadcasts.
+
+#### Spanning Tree Protocol
+The spanning tree protocol (**STP**) ensures that no infinite loops of broadcasts occur. It does this by having every
+port be in either a *forwarding* state, or a *blocking* state. Blocked ports will not send or receive any data, meaning
+that properly blocking some ports will prevent broadcast loops.
+
+The steps of the spanning tree protocol are as follows:
+1. Select a *Root Bridge*.
+    - This is done with a BPDU (bridge protocol data unit) packet containing a *Bridge ID*: bridge MAC Address + a
+    Priority Number
+        - The bridge with the lowest bridge ID becomes the root bridge.
+2. Set all outgoing root bridge ports to forwarding mode (these are *designated* ports/interfaces).
+3. Each non-root bridge sets a root port, and sets them on forwarding mode.
+    - The port with the shortest path to the root port (using Dijkstra's algo. Each cable has a certain cost depending
+    on their bandwidth).
+4. Block port between two non-root bridges.
+    - The port of the bridge with the highest bridge ID will be blocked (*non-designated*).
+
+Now your bridges are loop free!
