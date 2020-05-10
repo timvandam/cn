@@ -8,6 +8,7 @@ at the very bottom of the Data Link Layer.
 - [Protocols in Wireless Channels](#protocols-in-wireless-channels)
 - [MAC in Classical Real-World Protocols](#mac-in-classical-real-world-protocols)
 - [Data Link Layer Switching](#data-link-layer-switching)
+- [Virtual LAN](#virtual-lan)
 
 ## The Channel Allocation Problem
 Every cable is only capable of sending so much data per time unit; its bandwidth is limited. This limitation requires us
@@ -241,3 +242,8 @@ The steps of the spanning tree protocol are as follows:
     - The port of the bridge with the highest bridge ID will be blocked (*non-designated*).
 
 Now your bridges are loop free!
+
+## Virtual LAN
+Virtual LANs are partitions of a bigger LAN that function as a LAN themselves. With VLAN, every frame is marked with
+which network it belongs to (called *tags*). Frames will also get a VLAN protocol ID. These are all inserted before the
+Length field.
