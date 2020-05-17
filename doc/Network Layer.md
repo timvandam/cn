@@ -7,6 +7,8 @@ networks using the network we know as the Internet. This is all done using IP ad
 - [Connectionless vs Connection-oriented](#connectionless-vs-connection-oriented)
 - [Routing](#routing)
 - [Congestion Control](#congestion-control)
+- [Quality of Service](#quality-of-service)
+- [Internetworking](#internetworking)
 
 ## Connectionless vs Connection-oriented
 In the network layer there are two ways of sending packets. You either decide where to send each packet individually, or
@@ -124,3 +126,58 @@ instantly go down as a result to packet loss.
 #### Random Early Detection
 Random Early Detection (RED) will drop packets if the buffer space is **almost** full. As just mentioned this is an
 implicit signal for the sender to slow down.
+
+## Quality of Service
+The congestion techniques before are good when you need the best performance under the circumstances. Some applications,
+however, require stronger performance guarantees (low latency, minimum throughput, etc.). This is where *QoS* comes in.
+
+### Overprovisioning
+The easing QoS solution is simply adding more capacity, this is called overprovisioning. The downside is that this
+solution is very expensive. You would pretty much have to be able to meet the demand of all applications at the same
+time to guarantee QoS for everyone (or actually just the amount of expected concurrent users).
+
+---
+
+Cheaper solutions that still provide QoS are called *QoS mechanisms*. To ensure QoS, four issues must be addressed:
+1. What applications need from the network;
+2. How to regulate traffic;
+3. How to reserve resources at routers to guarantee performance;
+4. Whether the network can safely accept more traffic.
+
+Unfortunately there is no single technique that efficiently handles all these issues, however, some techniques at the
+network and transport layer can be combined to cover them quite well.
+
+A stream of packets from a source to a destination is called a **flow**. Each flow can be characterized by four
+parameters: **bandwidth**, **delay**, **jitter** and **loss**, which together determine the QoS required by the flow.
+
+Each of these parameters but *jitter* should be quite self-explanatory by now. Jitter is the variation of the delay.
+Hence, jitter is an important parameter when data needs to arrive in consistent intervals. Examples would be live video
+and audio; if every frame is delayed by 2 seconds its completely fine, you will just see everything two seconds after
+the fact. If this delay changes, however, you will have to wait (unless the application does something smart).
+
+Each application has different needs. Video conferences, for instance, have high bandwidth, delay, and jitter demands,
+but loss is not that big of a deal as high quality video is not always that important. File sharing only has high
+bandwidth requirements, as responsiveness doesn't really matter. Most video games *are* sensitive to delays, so their
+delay requirements are higher while bandwidth is usually not that important as the packets they send are usually small.
+
+## Internetworking
+Sending packets over multiple networks poses a number of challenges:
+1. Networks may use different protocols;
+2. Networks may offer different QoS guarantees;
+3. Networks have different maximum packet sizes.
+
+### Tunneling
+If the source and destination networks use the same protocol, we can use tunneling to send data through networks that
+doesn't use this protocol. This requires the relaying networks to support both the protocol that the source &
+destination use and the protocol that the networks in between the source and destinations use. A disadvantage of this is
+that QoS guarantees are now no longer guarantees, as they depend on all routers in the path.
+
+Another issue arises when the source wants to send a message with size 10, while the intermediate protocol only supports
+messages of size 8. In this case *packet fragmentation occurs*, where packets are split into smaller parts. When
+applying **transparent fragmentation** these are once again reconstructed before sending it to the final destination. A
+disadvantage of this is that this is more expensive for routers to do, and adds complexity. Hence, there is also an
+alternative in **nontransparent fragmentation**, where fragmented parts are delivered to the destination. The IP
+protocol uses nontransparent fragmentation.
+
+An alternative to packet fragmentation is **MTU Discovery**, where packets that are too large are simply not transmitted,
+making the source responsible for splitting packets into smaller bits. This is also used in IP.
