@@ -134,8 +134,8 @@ other available nodes (which will be hidden nodes to the original receiver node)
 solution to the described problem.
 
 ## MAC in Classical Real-World Protocols
-Machines used to share a single Ethernet connection, which meant that CSMA/CD was needed to transmit data succesfully.
-In classes Ethernet 1-persistent CSMA/CD was used, where **BEB** (Binary Exponential Backoff) was used to compute the
+Machines used to share a single Ethernet connection, which meant that CSMA/CD was needed to transmit data successfully.
+In classic Ethernet 1-persistent CSMA/CD was used, where **BEB** (Binary Exponential Backoff) was used to compute the
 random backoff time. With BEB, the number of slots to wait depends on the amount of failed attempts, using the formula
 2<sup>i</sup> - 1. This technique would be efficient for large frames, but not for smaller frames. This is because
 bigger frames mean less contention period in the same time frame. This shows that the contention period can be quite a
