@@ -219,10 +219,6 @@ NATs know which internal address is sending or receiving data by their port. Whe
 port by a port the NAT will use for the sending internal address. When receiving messages on this port it will know who
 to send it to. You can also manually configure this, which is also called port forwarding.
 
-ISPs can also have their own NAT. In those cases every household or company that uses this ISP will be seen as one
-device by the ISPs NAT. One IP is then shared by a bunch of users. An advantage of this is that an ISP could provide
-DDoS protection for all their users.
-
 ## IPv6
 IPv6 addresses are 128-bits long. This completely removes the need for NAT boxes (2<sup>128</sup> is greater than the
 amount of atoms in the universe). It also uses a simplified header, improving bandwidth/latency, and even improves
