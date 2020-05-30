@@ -13,6 +13,8 @@ communicate.
 - [Initial Sequence Numbers](#initial-sequence-numbers)
 - [Crash Recovery](#crash-recovery)
 - [Flow Control](#flow-control)
+- [TCP Congestion Control](#tcp-congestion-control)
+- [Connection Release](#connection-release)
 
 ## Addressing
 In its simplest form, the transport layer links ports to IP addresses. I.e., when the network layer receives a message,
@@ -242,3 +244,106 @@ for two acknowledgements before being allowed to send again. This causes long de
 is already some latency. Since the data in the window is already being processed, and the sender can only transmit more
 data once they receive an ACK with a positive window size, there is always a delay between having processed data, and
 receiving more data to process. Greater latencies now cause a reduction of throughput.
+
+## TCP Congestion Control
+Both the network layer and transport layer are responsible for congestion control. The network layer sends signals when
+there is congestion, causing re-routing, dropping packets, etc., while the transport layer is responsible for the amount
+of network that is added to the network. This means that the transport layer should pause when it sees a network layer
+signal indicating a congestion network. Don't confuse this with the network layer dropping packets - the transport layer
+is completely unaware of this and will have to wait for a NACK of some sort (like an expired timer) before knowing that
+a dropped packet never arrived. Making the transport layer aware of congestion completely eliminates this issue,
+decreasing latency in case of congestion.
+
+UDP doesn't care about congestion, so when all you use is applications that use UDP you might get some huge delays in
+case of congestion.
+
+There are a few unknown variables that could help control congestion:
+- Available bandwidth;
+- Network topology;
+- Other clients.
+
+### Dynamically Adjusting Bandwidth using Trial & Error
+One way of dealing with not knowing the available bandwidth is by simply increasing bandwidth until you receive a
+congestion signal, and then slowing it down again.
+
+The disadvantage of this is that congestion doesn't just depend on you. For all you know your neighbor is downloading
+Shrek in 8K, taking up all your shared fibre optic cable's bandwidth while you're not even close to your allocated
+maximum bandwidth and still receive a congestion signal, so in some cases you might not be able to use your bandwidth.
+This is not a huge problem though, as shortly after TCP will simply start increasing your bandwidth again.
+
+### Congestion Detection
+There are a few ways to detect congestion:
+1. Explicit feedback from routers;
+    - Routers can tell your computer to slow it down, but this is quite rare.
+2. Loss;
+    - Detect when your packets are being dropped and slow it down. This is the most common approach.
+    - Can create false-positives when your timer expires before receiving an ACK, or when error codes doesn't match. 
+3. Latency.
+    - Detect when the time between receiving ACKs is bigger than the time between sent segments.
+    - Takes a bit longer to detect congestion, but gives a better indication of transmission rate.
+
+### Regulating Sending Rate
+When multiple users are using bandwidth, you want to give them all an equal (fair) share of bandwidth. Since the amount
+of bandwidth is usually unknown, we have to use a different approach to figure out how much we should allocate to each
+user.
+
+A few different approaches are:
+1. Additive (rate + `a`, rate - `a`);
+2. Multiplicative (rate * `m`, rate / `m`);
+3. Combination of both.
+    1. Additive increase/decrease;
+    2. Additive increase, multiplicative decrease;
+    3. Multiplicative increase, additive decrease;
+    4. Multiplicative increase, multiplicative decrease.
+    
+The downside of using an approach that is strictly additive/multiplicative approach is that you never get an optimal
+result; for a strictly additive approach, if you're above the efficiency line your bandwidth will decrease by a set
+amount, then it will automatically increase, and once again receive a congestion packet making it go down again over and
+over again. For strictly multiplicative approaches the exact same thing happens (but instead of adding a set amount of
+bandwidth, the bandwidth increases/decreases by a factor `m`).
+
+A better solution is an additive increase with multiplicative decrease. The amount of bandwidth will still jump around
+the efficiency line, but will creep closer to the optimal point.
+
+### Congestion Window
+TCP applies this using a **congestion window**. The sender locally tracks this window and specifies how many segments
+can be transmitted. While the previously discussed window in flow control makes sure clients can handle traffic, this
+window makes sure the network can handle it. Both windows can pretty much VETO whether you're able to send; whenever
+either window is too small you won't transmit data. This prevents both network and client overloads.
+
+Whenever you receive ACKs, you can increase the congestion window (meaning you can send more). This limits the sending
+rate to ensure that all links can deal with the amount of data being transferred. The ACK rate will thus of course be
+the rate the slowest link can handle.
+
+### TCP Slow Start
+Choosing an initial congestion window is not handy, as the size of such a window depends on the network, and before
+sending any data you will not know the specifications of that network. Instead, TCP slow start is used, where you start
+with a congestion window of 1, and then double it with each received ACK until receiving a congestion packet. The
+advantage of this approach is that you will quickly be transferring at maximum bandwidth (exponential). There are
+multiple methods you can use to determine when to stop using slow start:
+1. When an arbitrary threshold is met (depends on TCP version);
+2. When there are missing ACKs (packet loss).
+
+In the former approach, you would switch to additive increase.
+
+This is obviously not slow, but is slower than the previous algorithm, where you would start with the flow control
+window. Some sockets have huge buffers, so you would start with an equally huge congestion window.
+
+### Slow Start in TCP Tahoe
+TCP Tahoe is the first version of TCP. In TCP Tahoe, slow start will stop when a threshold is met. However, whenever you
+lose a packet, the congestion window will be reset to 1, and the threshold is lowered.
+
+The problem with this approach is that just one lost packet immediately slows down your transmission rate. Hence, TCP
+Fast Recovery was introduced (TCP Tahoe + Fast Recovery = TCP Reno).
+
+### TCP Fast Recovery
+When a packet is lost in TCP Reno, instead of resetting the congestion window back to 1, it is reduced by a certain
+factor (multiplicative decrease).
+
+Newer TCP versions use different variations of the same key idea of decreasing congestion window and threshold (e.g.
+using implicit signals to detect congestion, like packet loss, instead of explicit congestion signals).
+
+Every OS usually uses a different variation of congestion control; Windows, for instance, uses packet less and e2e delay
+to detect congestion, while Linux and MacOS only use packet loss.
+
+## Connection Release
