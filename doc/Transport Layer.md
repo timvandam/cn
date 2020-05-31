@@ -346,4 +346,36 @@ using implicit signals to detect congestion, like packet loss, instead of explic
 Every OS usually uses a different variation of congestion control; Windows, for instance, uses packet less and e2e delay
 to detect congestion, while Linux and MacOS only use packet loss.
 
-## Connection Release
+## TCP Connection Release
+Releasing TCP connections is not as trivial as it sounds. There are generally two approaches to this:
+1. Asymmetric disconnect;
+    - Disconnect without discussing with the other party.
+2. Symmetric disconnect.
+    - Disconnect after an agreement with the other party.
+    
+Asymmetric disconnect is easy, but can lead to trouble as the other party won't instantly know that you have
+disconnected and will continue sending data, resulting in data loss. For example: the other party sends data `D`, you
+send a `FIN` and stop listening, now you receive `D`. However, you're no longer listening at the port at which `D`
+arrived, so will lose data. For this reason asymmetric disconnect is not a viable solution for TCP. Hence, it uses
+something more closely related to symmetric disconnect.
+
+With symmetric connection releases both participants agree to end the connection. Simple right? NOT!
+
+### The Two Armies Problem
+The two armies problem makes symmetric connection releases difficult. Without going into detail, the problem is that
+you can never be sure that the other party has received the message. You might think that ACKs will solve this, but this
+will let the previous sender know their message arrived, but the person that sent the ACK won't know whether their ACK
+has arrived. There is no solution for this. Sending an ACK for an ACK would require that ACK to be acknowledged too,
+with another ACK, which would also need an ACK... You get the gist.
+
+Symmetric release uses FIN packets to disconnect. The party that wants to disconnect send first sends a FIN, the other
+party then agrees by sending a FIN themselves, which is then acknowledged by the other participant. If your FIN goes
+unanswered, or you don't receive a final ACK, you just do an asymmetric disconnect after a while.
+
+So, it looks like this:
+|A->B FIN|
+|:---:|
+|**B->A FIN**|
+|**A->B ACK**|
+
+All the main TCP header fields have now been covered! (except urgent pointer + options).
