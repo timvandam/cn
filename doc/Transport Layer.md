@@ -355,9 +355,9 @@ Releasing TCP connections is not as trivial as it sounds. There are generally tw
     
 Asymmetric disconnect is easy, but can lead to trouble as the other party won't instantly know that you have
 disconnected and will continue sending data, resulting in data loss. For example: the other party sends data `D`, you
-send a `FIN` and stop listening, now you receive `D`. However, you're no longer listening at the port at which `D`
-arrived, so will lose data. For this reason asymmetric disconnect is not a viable solution for TCP. Hence, it uses
-something more closely related to symmetric disconnect.
+send a disconnect message (or don't) stop listening, now you receive `D`. However, you're no longer listening at the
+port at which `D` arrived, so will lose data. For this reason asymmetric disconnect is not a viable solution for TCP.
+Hence, it uses something more closely related to symmetric disconnect.
 
 With symmetric connection releases both participants agree to end the connection. Simple right? NOT!
 
