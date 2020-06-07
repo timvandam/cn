@@ -6,6 +6,7 @@ and more.
 - [DNS](#dns)
 - [Email](#email)
 - [WWW](#www)
+- [CDN](#cdn)
 
 ## DNS
 DNS is quite literally what the initialism stands for: domain name system. The system allows us to enter a domain name
@@ -78,7 +79,7 @@ recipient, such as the name of who sent/received the email. It can also contain 
 ### The Body
 The body is exactly what you would expect it to be; the data that has been sent.
 
-## Email Protocols
+### Email Protocols
 Email uses multiple protocols:
 1. **POP3** and **IMAP** are used to allow users to interact with their mailbox;
     - POP3 is older and generally deletes messages once you read them - not handy in the current era where everyone has
@@ -94,7 +95,7 @@ But what if your message transfer agent doesn't know where the recipient's serve
 once again. You can simply query
 a nameserver to get an IP which your message agent will include when using SMTP.
 
-### SMTP
+#### SMTP
 SMTP uses ASCII, which is not ideal as you can't really send binary data with ASCII. Another huge disadvantage of basic
 SMTP is that it does not include authentication, meaning you can easily forge the `from` field to send emails in someone
 else's name. Luckily many SMTP extensions address these issues.
@@ -127,7 +128,7 @@ all ASCII encoded as base64 causes an additional bit for every 3 bits.
 Another (small) disadvantage is the need to pad to ensure we have a stream with a length divisible by 6. This padding is
 always an equals sign (=), you have probably seen it before in many places.
 
-### IMAP
+#### IMAP
 IMAP is probably what you use to communicate with your mail server. It is a protocol that allows you to manipulate
 mailboxes and replaced POP3. There are a few common commands:
 1. LOGIN - log in to your mail server;
@@ -167,3 +168,96 @@ There are generally two ways of dealing with MIME types. One of them is having y
 other is having your browser let another program take care of it. So, the former could mean your browser has a plugin
 that allows it to play videos, while the latter means it opens whatever your default video player is and plays
 downloaded videos there.
+
+## CDN
+*Content Delivery Networks* can be used to deliver content at one domain name, from multiple physical machines. When you
+need to serve a lot of (static) data to many users, to the point where server farms are not enough, CDNs are ideal. They
+allow you to scale globally, meaning you can have data centers all over the world to ensure low latency content delivery
+to all your users.
+
+CDNs completely turn the traditional web caching on its head - instead of having users look for a copy of the requested
+resource or page in a nearby cache, the provider itself places such a copy somewhere close. CDNs follow a tree structure
+with its root being the *origin server*. The origin server is the server that generates or stores the original content.
+Its children are CDN nodes, which own a copy of the original content, which they can then serve to clients connected to
+them. Since CDNs form a tree structure, it is very easy to scale up. You can simply add a sibling CDN node in a region
+when that respective region's node is often at maximum load.
+
+If your origin server can only handle so much bandwidth, you can fix that by simply creating CDN nodes as children of
+other CDN nodes. This increases the height of the tree, and ensures that the added CDN node don't interact with the
+origin server at all, instead their parent CDN node does that. You can repeat the exact same process over and over again
+to increase the size of your tree while maintaining a well-working network. It is of course important to ensure your
+tree is as efficient as possible to reduce cost.
+
+Note that CDNs don't only reduce latency because they are often nearer to you than the origin server; they can also
+improve bandwidth. This is not only because CDNs handle a small partition of the total amount of clients, but also
+because a lower latency allows TCP slow-start to ramp up more quickly, which means you will be transferring at maximum
+bandwidth sooner.
+
+### Organizing Clients
+While the distribution tree is rather simple, it is less simple to have client connect to the right node, as you have
+just one outwards-facing domain name. A possible solution to this is using Web proxies to make clients able to connect
+to their nearest CDN node. In practice, though, this solution falls short for a few reasons:
+1. Clients in a given part of the network probably belong to different organizations, so they are probably using
+different web proxies;
+2. There can be multiple CDNs, but each client only uses a single proxy cache - which CDN should the client use?;
+3. Proxies are configured by clients, which pretty much makes this idea suck as no non-tech person would configure a
+proxy just to use Twitter.
+
+### Mirroring
+A better solution can be found in *mirroring*, where the origin server's content contains explicit links to different
+mirrors (which are just the CDN nodes). This makes it easy for users to manually select a nearby mirror. You probably
+have visited a website before that asks you your location the moment you enter their website, and once you select your
+country it redirects you to `nl.website.com`, for instance. This is exactly what mirroring is. It is simple and
+practical as it is essentially just having different websites for different regions. You can simply set it up in your
+DNS by having a subdomain like the previous one simply point to a mirror's IP address.
+
+Mirroring is also often applied when downloading software from repositories. If you install Ubuntu, it will ask you for
+your location. It will then select which repositories to download stuff from based on that location. Check
+`/etc/apt/sources.list` if you don't believe me, they will probably contain `http://nl.archive.ubuntu.com/ubuntu/`.
+
+You can generally only serve static content with this solution, as dynamic content usually requires a database. If you
+have one central database, your CDN will be slow. If you distribute your database, it will be either non consistent, or
+not available. Not available would once again slow your CDN down, and non consistent is bad. As you can see the moment
+you step out of the realm of static content a lot of issues arise. In some cases non consistency would probably be fine,
+though, as you might only be using the local copy of the database. If you ensure your databases are consistent within
+the time it takes to physically travel from one CDN region to another, it would function just fine. There's a lot of
+if's here though - let's leave this one to the professional network guys.
+
+The downside of mirroring is that it requires users to do the distribution.
+
+### DNS Redirection
+Another approach, which overcomes the difficulties of mirroring, is *DNS redirection*. As previously discussed, your DNS
+pretty much transforms a domain to an IP address, however, most name servers won't know the domain and will redirect you
+to another name server instead. This means that you can set up your own name server that dynamically determines the IP
+it resolves when you query their domain name. You can now apply mirroring just like before, but without the user
+noticing or having to do anything! This solution is a bit more expensive, though. A disadvantage is that other name
+servers can mess your distribution up by resolving your domain name statically. So technically you could throttle an
+international website by redirecting all your local traffic to a distant CDN node.
+
+### Nearest Node
+We now know how CDNs work, but not how a certain node is chosen (when not done manually). Defining the nearest node is
+not a question of which node is geographically near, but rather which is nearer on the internet itself, i.e. which node
+has the shortest route. This is the *network distance*. Another factor is the load that is already being carried by the
+CDN node. If you happen to live next to a Google CDN, but everybody happens to be googling at the moment, you might
+connect to a Google CDN in the next city instead (where nobody is googling). So balancing load is also important when
+choosing which CDN node is ideal for a client.
+
+The techniques for using DNS for content distribution were pioneered by Amakai, starting in 1998. If you've ever used
+Steam you might have noticed that all of their [images](https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot621FAR17P7NdTRH-t26q4SZlvD7PYTQgXtu5cB1g_zMyoD0mlOx5UM5ZWClcYCUdgU3Z1rQ_FK-xezngZO46MzOziQ1vSMmtCmIyxfkgx5SLrs4SgJFJKs/360fx360f)
+are hosted using Amakai. Amakai was the first major CDN and became the industry leader, so no surprise that a platform
+with a lot of data transfer such as Steam uses their services. Since 1998 more companies have gotten into this business,
+so it's now a competitive industry with multiple providers. Most companies/websites that use CDNs hire firms like Amakai
+to handle it for them. They give the firm their content, which they then push to CDN nodes. The owner then rewrites any
+of its web pages that link to the content (e.g. your <img> src is now the CDN node instead of your own web server).
+Since you usually hire firms like Amakai for your CDN needs, it's hard to serve dynamic content as it requires dedicated
+software.
+
+Another advantage for sites to use a shared CDN is that future traffic is hard to demand. Surges in demand - called
+*flash crowds*, can easily overflow or throttle a site's web servers. An example is the Florida Secretary of State's
+website, which is usually in high demand on the election day in the US. On November 7th, 2000, it suddenly became one of
+the busiest websites in the world as people wanted to check the election result. As a result the site crashed. If it had
+been using a CDN this could have been prevented. 
+
+For CDN nodes to have optimal connectivity they can be placed at ISPs. This is beneficial for everyone; the website will
+load faster, which makes the company money, makes the ISP look good, and delivers content to the user faster. ISPs
+don't have to pay for this, so it's a no-brainer for them.
