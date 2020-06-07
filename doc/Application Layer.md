@@ -8,6 +8,7 @@ and more.
 - [WWW](#www)
 - [CDN](#cdn)
 - [Video & Audio Streaming](#video-streaming)
+- [Peer-to-Peer Networks](#peer-to-peer-networks)
 
 ## DNS
 DNS is quite literally what the initialism stands for: domain name system. The system allows us to enter a domain name
@@ -325,3 +326,27 @@ also sending data. Low latency, but high quality is key. This is usually not ach
 latency with high bandwidth. A partial solution to this is an adaptive compression rate - users with a lower data rate
 will cause all users to compress their data with more lossy compression. If there's more bandwidth available, the
 opposite happens.
+
+## Peer-to-Peer Networks
+If you don't want to pay for many expensive servers, you can make every user both a consumer, and a provider of services.
+This is how torrents operate; when you download a torrent, your torrent client will passively send out data too.
+Blockchain-based services like Bitcoin are also p2p networks. The users form the infrastructure, instead of a central
+server doing so. Services like BitTorrent will still need a server to tell people in the network about their peers,
+though, this is done with *trackers*. P2P networks are naturally scalable.
+
+A problem with this design is that there is still a central tracker to be able to find peers. It's possible to
+decentralize trackers using *Distributed Hash Tables* (DHTs). They work by distributing tracker information over all
+users. There are a few challenges to solve:
+1. Small amount of information to store per node;
+2. Quick look up;
+3. Concurrent use by all users.
+
+In practice a ring-shaped network is formed. The ring has 2<sup>m</sup> positions, which can all be populated by a user.
+Your position in the ring can be computed by applying a hash function on your IP address. The peers for a torrent `t`
+are then stored at user `successor(hash(t))`. You can't simply use `hash(t)`, as not all positions in the ring have to
+be taken. These rings can get quite big, so it is not scalable for each user to remember all their peers. Hence, they
+only remember their neighbors. 
+
+Now, if you want to find a peer for a certain torrent, you will have to traverse on average half the ring. This is not
+scalable at all. To solve this, all nodes will keep track of `m` other nodes in the ring (other nodes are Me +
+2<sup>i</sup>). Nodes can now contact other nodes recursively until the node you want is found. 
