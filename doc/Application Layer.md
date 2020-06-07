@@ -7,6 +7,7 @@ and more.
 - [Email](#email)
 - [WWW](#www)
 - [CDN](#cdn)
+- [Video & Audio Streaming](#video-streaming)
 
 ## DNS
 DNS is quite literally what the initialism stands for: domain name system. The system allows us to enter a domain name
@@ -242,14 +243,14 @@ CDN node. If you happen to live next to a Google CDN, but everybody happens to b
 connect to a Google CDN in the next city instead (where nobody is googling). So balancing load is also important when
 choosing which CDN node is ideal for a client.
 
-The techniques for using DNS for content distribution were pioneered by Amakai, starting in 1998. If you've ever used
+The techniques for using DNS for content distribution were pioneered by Akamai, starting in 1998. If you've ever used
 Steam you might have noticed that all of their [images](https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot621FAR17P7NdTRH-t26q4SZlvD7PYTQgXtu5cB1g_zMyoD0mlOx5UM5ZWClcYCUdgU3Z1rQ_FK-xezngZO46MzOziQ1vSMmtCmIyxfkgx5SLrs4SgJFJKs/360fx360f)
-are hosted using Amakai. Amakai was the first major CDN and became the industry leader, so no surprise that a platform
+are hosted using Akamai. Akamai was the first major CDN and became the industry leader, so no surprise that a platform
 with a lot of data transfer such as Steam uses their services. Since 1998 more companies have gotten into this business,
-so it's now a competitive industry with multiple providers. Most companies/websites that use CDNs hire firms like Amakai
+so it's now a competitive industry with multiple providers. Most companies/websites that use CDNs hire firms like Akamai
 to handle it for them. They give the firm their content, which they then push to CDN nodes. The owner then rewrites any
 of its web pages that link to the content (e.g. your <img> src is now the CDN node instead of your own web server).
-Since you usually hire firms like Amakai for your CDN needs, it's hard to serve dynamic content as it requires dedicated
+Since you usually hire firms like Akamai for your CDN needs, it's hard to serve dynamic content as it requires dedicated
 software.
 
 Another advantage for sites to use a shared CDN is that future traffic is hard to demand. Surges in demand - called
@@ -261,3 +262,66 @@ been using a CDN this could have been prevented.
 For CDN nodes to have optimal connectivity they can be placed at ISPs. This is beneficial for everyone; the website will
 load faster, which makes the company money, makes the ISP look good, and delivers content to the user faster. ISPs
 don't have to pay for this, so it's a no-brainer for them.
+
+## Video & Audio Streaming
+Streaming video or audio is quite expensive, as they can take up quite some data. To reduce the amount of data you can
+apply compression. Compression can either be lossless or lossy - lossless meaning no quality is lost, lossy meaning
+quality is lost. With audio, for instance, you can remove all frequencies that humans can't hear, while for video you
+could group adjacent pixels with almost the same color as a group of pixels with just one color (= less bits).
+
+### MPEG
+MPEG is a digital video compression scheme. It compresses over a sequence of frames, and uses motion tracking to remove
+temporal redundancy, meaning if a certain pixel doesn't change from one frame to the other, you don't include that pixel
+in both frames. MPEG uses different types of frames:
+1. I (Intra-coded), where frames are self-contained;
+2. P (Predictive), where only changes to previous frames are used;
+3. B (Bidirectional), where prediction can be based on previous and future frames.
+
+P is obviously much more efficient when your video doesn't move much, but losing just one frame will affect the entire
+video. B *can* deal with loss as you can reconstruct frames based on frames around that frame it.
+
+---
+
+There are a few challenges when using compression:
+
+### Streaming Stored Media
+When you want to stream something that's already stored (like watching a movie on Netflix), the service you are
+streaming from will already have all the data you will need. This allows you to download data before needing it. This
+download is not usually done using HTTP. Instead, a metafile is sent over HTTP, which media players then use to
+establish a TCP/UDP session over which data will be sent. Most browsers have a media player integrated.
+
+To ensure you don't lose any frames, you might think it's ideal to use TCP. This is wrong. TCP can trigger
+retransmissions when frames go missing. This temporarily causes an increase of latency, meaning your jitter goes through
+the roof. This is not great while streaming video as you will have to wait for a bit before you can continue watching.
+It's not that bad though; Netflix uses it.
+
+Instead of TCP you could also use UDP and implement your own error correction. This can still increase your jitter
+because sometimes errors simply can't be corrected. In other cases it can work fine, but will still have a big overhead
+compared to other solutions (not as big as TCP, though).
+
+A third option is to *Interleave Media*, where there is less jitter and decoding complexity (for error correction) is
+lower. The idea is that instead of sending a video fragment first, and sending an audio fragment after, you send even
+smaller partitions of video and audio. A transmission error would then mean that instead of missing only audio or video,
+you would miss both. This might seem like a bad solution, but it decreases the amount of video or audio you would
+otherwise miss. Sometimes these small missing pieces of data are noticeable when it's only video/audio, but not
+noticeable when it's both.
+
+As mentioned before, you can download faster than you watch. This makes it possible to create a buffer where you store
+the data you will watch later. This buffer usually gives you enough time to receive retransmissions of video/audio with
+errors in them. When the buffer is too empty (low water mark) you can simply request more data. When it's too full (high
+water mark), you can tell the server to slow down.
+
+### Streaming Live Media
+Streaming live media is much harder than streaming stored media - you won't have a buffer to fill as you can't download
+faster than you're watching it. This is not technically true, as completely removing the buffer would make jitter very
+noticeable as your video would constantly stall. So a small buffer is used to absorb jitter, adding a bit of latency.
+
+Another problem is that live media often has many concurrent viewers. This might seem great as you can use UDP multicast
+to send live data to everyone. This is almost never available, though. Instead, many TCP connections are used.
+
+### Streaming Interactive Media
+Real-time conferencing is an example of interactive media. It's pretty much live media but not only receiving data but
+also sending data. Low latency, but high quality is key. This is usually not achievable, though, as it requires low
+latency with high bandwidth. A partial solution to this is an adaptive compression rate - users with a lower data rate
+will cause all users to compress their data with more lossy compression. If there's more bandwidth available, the
+opposite happens.
