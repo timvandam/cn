@@ -3,15 +3,22 @@
     <words>
       <w>akamai</w>
       <w>amakai</w>
+      <w>blockciphers</w>
       <w>cern</w>
+      <w>ciphertext</w>
+      <w>ciphertexts</w>
+      <w>cryptosystem</w>
+      <w>cryptosystems</w>
       <w>dhcp</w>
       <w>dolev</w>
       <w>ecmp</w>
       <w>imap</w>
       <w>internetworking</w>
+      <w>kerckhoff</w>
       <w>mpeg</w>
       <w>ospf</w>
       <w>overprovisioning</w>
+      <w>prng</w>
       <w>smtp</w>
       <w>tiananmen</w>
     </words>
