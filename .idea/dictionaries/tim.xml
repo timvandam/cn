@@ -5,19 +5,26 @@
       <w>amakai</w>
       <w>blockciphers</w>
       <w>cern</w>
+      <w>ciphersuite</w>
+      <w>ciphersuites</w>
       <w>ciphertext</w>
       <w>ciphertexts</w>
       <w>cryptosystem</w>
       <w>cryptosystems</w>
       <w>dhcp</w>
+      <w>dnssec</w>
       <w>dolev</w>
       <w>ecmp</w>
       <w>imap</w>
       <w>internetworking</w>
       <w>kerckhoff</w>
+      <w>keystream</w>
+      <w>krack</w>
       <w>mpeg</w>
+      <w>nonrepudiation</w>
       <w>ospf</w>
       <w>overprovisioning</w>
+      <w>preimage</w>
       <w>prng</w>
       <w>smtp</w>
       <w>tiananmen</w>
