@@ -151,9 +151,9 @@ The problem with this approach is that this type of encryption cannot be paralle
 
 ##### Counter
 If you *do* want to parallelize encryption and decryption you could use the counter mode. In this mode you still choose
-an IV, but of half your block-length instead. You now encrypt your IV with your counter, and XOR the result of that with
-your message to get your block ciphertext. The resulting block ciphertext will *not* become the next IV, as this would
-once again prevent parallelism.
+an IV, but of half your block-length instead. You now concatenate your IV with your counter before using that IV, and
+XOR the result of that with your message to get your block ciphertext. The resulting block ciphertext will *not* become
+the next IV, as this would once again prevent parallelism. The first block could have counter 0, then 1 then 2, etc.
 
 There are more modes, but these are the three most common ones.
 
